@@ -1,0 +1,20 @@
+{
+  "name": "tx-activity-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Transaction activity generator for Vanar Chain",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/backend",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspace=packages/backend",
+    "generate-wallets": "npm run generate-wallets --workspace=packages/backend",
+    "simulate": "npm run simulate --workspace=packages/simulator"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.2"
+  }
+}

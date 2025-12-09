@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Neo Brutalist Base Styles */
+@layer components {
+  .brutal-card {
+    @apply bg-white border-4 border-brutal-black shadow-brutal p-4;
+  }
+
+  .brutal-card-hover {
+    @apply brutal-card hover:shadow-brutal-hover hover:-translate-y-1 hover:-translate-x-1 transition-all;
+  }
+
+  .brutal-btn {
+    @apply bg-brutal-yellow border-4 border-brutal-black shadow-brutal px-4 py-2 font-bold uppercase;
+    @apply hover:shadow-brutal-hover hover:-translate-y-1 hover:-translate-x-1 transition-all;
+    @apply active:shadow-none active:translate-y-1 active:translate-x-1;
+  }
+
+  .brutal-btn-danger {
+    @apply brutal-btn bg-brutal-red text-white;
+  }
+
+  .brutal-btn-success {
+    @apply brutal-btn bg-brutal-green text-brutal-black;
+  }
+
+  .brutal-btn-cyan {
+    @apply brutal-btn bg-brutal-cyan text-brutal-black;
+  }
+
+  .brutal-btn-magenta {
+    @apply brutal-btn bg-brutal-magenta text-white;
+  }
+
+  .brutal-input {
+    @apply border-4 border-brutal-black px-3 py-2 font-mono;
+    @apply focus:outline-none focus:ring-4 focus:ring-brutal-yellow;
+  }
+
+  .brutal-heading {
+    @apply text-xl font-extrabold uppercase tracking-wider;
+  }
+
+  .brutal-label {
+    @apply font-bold uppercase text-sm tracking-wide;
+  }
+
+  .brutal-divider {
+    @apply border-t-4 border-brutal-black my-4;
+  }
+}
+
+/* Status indicators */
+.status-healthy {
+  @apply bg-brutal-green;
+}
+
+.status-low {
+  @apply bg-brutal-yellow;
+}
+
+.status-empty {
+  @apply bg-brutal-red;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border: 2px solid #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+/* Animation for live updates */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: #000;
+  }
+  50% {
+    border-color: #00FF00;
+  }
+}
+
+.animate-pulse-border {
+  animation: pulse-border 2s infinite;
+}
