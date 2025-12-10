@@ -15,6 +15,7 @@
     "simulate": "npm run simulate --workspace=packages/simulator"
   },
   "devDependencies": {
-    "typescript": "^5.3.2"
+    "typescript": "^5.3.2",
+    "xlsx": "^0.18.5"
   }
 }

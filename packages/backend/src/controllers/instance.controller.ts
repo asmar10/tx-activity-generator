@@ -99,4 +99,14 @@ export const instanceController = {
       res.status(500).json({ success: false, error: error.message });
     }
   },
+
+  async reset(req: Request, res: Response): Promise<void> {
+    try {
+      await instanceManager.reset();
+      res.json({ success: true, message: 'All instances stopped and transaction feed cleared' });
+    } catch (error: any) {
+      logger.error('Failed to reset', { error: error.message });
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useAppStore } from '../../store';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'danger' | 'success' | 'cyan' | 'magenta';
@@ -13,7 +13,11 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  const baseClass = 'border-4 border-brutal-black font-bold uppercase transition-all';
+  const darkMode = useAppStore((state) => state.darkMode);
+
+  const baseClass = `border-2 font-bold uppercase transition-all ${
+    darkMode ? 'border-brutal-dark-border' : 'border-brutal-black'
+  }`;
 
   const variantClasses = {
     primary: 'bg-brutal-yellow text-brutal-black',
@@ -24,7 +28,7 @@ export function Button({
   };
 
   const sizeClasses = {
-    sm: 'px-2 py-1 text-xs shadow-[2px_2px_0px_0px_#000]',
+    sm: `px-2 py-1 text-xs shadow-[2px_2px_0px_0px_${darkMode ? '#333' : '#000'}]`,
     md: 'px-4 py-2 text-sm shadow-brutal',
     lg: 'px-6 py-3 text-base shadow-brutal-lg',
   };

@@ -47,16 +47,18 @@ export const instanceApi = {
     }),
   stopAll: () =>
     fetchApi<void>('/instances/stop-all', { method: 'POST' }),
+  reset: () =>
+    fetchApi<{ message: string }>('/instances/reset', { method: 'POST' }),
 };
 
 // Funding API
 export const fundingApi = {
   getMasterBalance: () =>
     fetchApi<{ address: string; balance: string }>('/funding/master-balance'),
-  distribute: (totalAmount: string, mode: 'equal' | 'random') =>
+  distribute: (totalAmount: string, mode: 'equal' | 'random', twoHop: boolean = true) =>
     fetchApi<any>('/funding/distribute', {
       method: 'POST',
-      body: JSON.stringify({ totalAmount, mode }),
+      body: JSON.stringify({ totalAmount, mode, twoHop }),
     }),
   enableAutoFund: () =>
     fetchApi<void>('/funding/auto/enable', { method: 'POST' }),
@@ -75,4 +77,14 @@ export const statsApi = {
     fetchApi<any[]>(`/stats/history?days=${days}`),
   getTransactions: (limit = 50) =>
     fetchApi<any[]>(`/stats/transactions?limit=${limit}`),
+};
+
+// Simulator API
+export const simulatorApi = {
+  getStatus: () => fetchApi<{ enabled: boolean }>('/simulator/status'),
+  enable: () => fetchApi<{ enabled: boolean; message: string }>('/simulator/enable', { method: 'POST' }),
+  disable: () => fetchApi<{ enabled: boolean; message: string }>('/simulator/disable', { method: 'POST' }),
+  getTransactions: (limit = 50) =>
+    fetchApi<any[]>(`/simulator/transactions?limit=${limit}`),
+  reset: () => fetchApi<{ message: string }>('/simulator/reset', { method: 'POST' }),
 };

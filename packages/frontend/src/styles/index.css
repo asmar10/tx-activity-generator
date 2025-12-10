@@ -4,15 +4,27 @@
 
 body {
   font-family: 'JetBrains Mono', monospace;
-  background-color: #f0f0f0;
   margin: 0;
   padding: 0;
 }
 
-/* Neo Brutalist Base Styles */
+/* Light mode default */
+body {
+  background-color: #f0f0f0;
+  color: #000000;
+}
+
+/* Dark mode when .dark class is applied */
+.dark body,
+.dark {
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+/* Neo Brutalist Dark Theme Styles */
 @layer components {
   .brutal-card {
-    @apply bg-white border-4 border-brutal-black shadow-brutal p-4;
+    @apply bg-brutal-dark-card border-2 border-brutal-dark-border shadow-brutal p-4;
   }
 
   .brutal-card-hover {
@@ -20,7 +32,7 @@ body {
   }
 
   .brutal-btn {
-    @apply bg-brutal-yellow border-4 border-brutal-black shadow-brutal px-4 py-2 font-bold uppercase;
+    @apply bg-brutal-yellow border-2 border-brutal-dark-border shadow-brutal px-4 py-2 font-bold uppercase text-black;
     @apply hover:shadow-brutal-hover hover:-translate-y-1 hover:-translate-x-1 transition-all;
     @apply active:shadow-none active:translate-y-1 active:translate-x-1;
   }
@@ -30,11 +42,11 @@ body {
   }
 
   .brutal-btn-success {
-    @apply brutal-btn bg-brutal-green text-brutal-black;
+    @apply brutal-btn bg-brutal-green text-black;
   }
 
   .brutal-btn-cyan {
-    @apply brutal-btn bg-brutal-cyan text-brutal-black;
+    @apply brutal-btn bg-brutal-cyan text-black;
   }
 
   .brutal-btn-magenta {
@@ -42,20 +54,20 @@ body {
   }
 
   .brutal-input {
-    @apply border-4 border-brutal-black px-3 py-2 font-mono;
-    @apply focus:outline-none focus:ring-4 focus:ring-brutal-yellow;
+    @apply bg-brutal-dark border-2 border-brutal-dark-border px-3 py-2 font-mono text-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-brutal-cyan;
   }
 
   .brutal-heading {
-    @apply text-xl font-extrabold uppercase tracking-wider;
+    @apply text-xl font-extrabold uppercase tracking-wider text-white;
   }
 
   .brutal-label {
-    @apply font-bold uppercase text-sm tracking-wide;
+    @apply font-bold uppercase text-sm tracking-wide text-brutal-gray;
   }
 
   .brutal-divider {
-    @apply border-t-4 border-brutal-black my-4;
+    @apply border-t-2 border-brutal-dark-border my-4;
   }
 }
 
@@ -72,29 +84,44 @@ body {
   @apply bg-brutal-red;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - light mode */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border: 2px solid #000;
+  background: #e0e0e0;
+  border: 1px solid #ccc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000;
+  background: #999;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #333;
+  background: #777;
+}
+
+/* Scrollbar styling - dark mode */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border: 1px solid #333;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Animation for live updates */
 @keyframes pulse-border {
   0%, 100% {
-    border-color: #000;
+    border-color: #333;
   }
   50% {
     border-color: #00FF00;
@@ -103,4 +130,18 @@ body {
 
 .animate-pulse-border {
   animation: pulse-border 2s infinite;
+}
+
+/* Glow effect for active elements */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+  }
+}
+
+.animate-glow {
+  animation: glow 2s infinite;
 }

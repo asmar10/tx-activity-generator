@@ -39,6 +39,31 @@ export function connectSocket(): void {
   socket.on('instance-stats', (stats) => {
     useAppStore.getState().setInstanceStats(stats);
   });
+
+  socket.on('simulator-mode', (enabled: boolean) => {
+    console.log('Simulator mode:', enabled);
+    useAppStore.getState().setSimulatorMode(enabled);
+  });
+
+  socket.on('wallets-changed', () => {
+    useAppStore.getState().triggerWalletsRefresh();
+  });
+
+  socket.on('clear-transactions', () => {
+    console.log('Clearing transaction feed');
+    useAppStore.getState().clearTransactions();
+  });
+
+  socket.on('funding-progress', (progress: { funded: number; total: number; current?: string }) => {
+    if (progress.funded === -1) {
+      // Funding complete, clear progress after a short delay
+      setTimeout(() => {
+        useAppStore.getState().setFundingProgress(null);
+      }, 2000);
+    } else {
+      useAppStore.getState().setFundingProgress(progress);
+    }
+  });
 }
 
 export function authenticate(password: string): void {

@@ -8,6 +8,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "generate-wallets": "ts-node src/scripts/generateWallets.ts",
+    "import-wallets": "ts-node src/scripts/importWalletsFromExcel.ts",
+    "check-balances": "ts-node src/scripts/checkBalances.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

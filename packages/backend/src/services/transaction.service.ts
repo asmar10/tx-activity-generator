@@ -1,7 +1,7 @@
 import { Transaction, ITransaction } from '../database/models';
 import { walletService } from './wallet.service';
 import { createWalletFromPrivateKey, sendTransaction, parseTokens, formatTokens } from '../utils/blockchain';
-import { pickRandom, pickRandomExcluding, calculateTransferAmount } from '../utils/random';
+import { pickRandom, pickWeightedByLowBalance, calculateTransferAmount } from '../utils/random';
 import { config } from '../config';
 import logger from '../utils/logger';
 
@@ -18,6 +18,9 @@ export enum TxError {
 export interface TransactionResult {
   success: boolean;
   txHash?: string;
+  from?: string;
+  to?: string;
+  amount?: string;
   error?: TxError;
   errorMessage?: string;
 }
@@ -25,15 +28,28 @@ export interface TransactionResult {
 export class TransactionService {
   async executeRandomTransaction(instanceId: string): Promise<TransactionResult> {
     const minBalance = parseTokens(config.minWalletBalance);
-    const eligibleWallets = await walletService.getEligibleWallets(minBalance);
 
-    if (eligibleWallets.length < 2) {
-      logger.warn('Not enough eligible wallets for transaction');
+    // Get eligible senders (must have >= minBalance to send)
+    const eligibleSenders = await walletService.getEligibleWallets(minBalance);
+
+    // Get ALL wallets for receivers (anyone can receive)
+    const allWallets = await walletService.getAllWallets();
+
+    if (eligibleSenders.length < 1) {
+      logger.warn('No eligible sender wallets for transaction');
       return { success: false, error: TxError.INSUFFICIENT_BALANCE };
     }
 
-    const senderWallet = pickRandom(eligibleWallets);
-    const receiverWallet = pickRandomExcluding(eligibleWallets, senderWallet);
+    if (allWallets.length < 2) {
+      logger.warn('Not enough wallets for transaction');
+      return { success: false, error: TxError.INSUFFICIENT_BALANCE };
+    }
+
+    // Pick random sender from eligible wallets (>= 8 VANRY)
+    const senderWallet = pickRandom(eligibleSenders);
+
+    // Pick receiver using weighted selection - lower balance = higher priority
+    const receiverWallet = pickWeightedByLowBalance(allWallets, senderWallet);
 
     const senderBalance = BigInt(senderWallet.balance);
     const transferAmount = calculateTransferAmount(senderBalance, minBalance);
@@ -82,7 +98,13 @@ export class TransactionService {
       await walletService.updateBalance(receiverWallet.address);
 
       logger.info(`Transaction confirmed: ${tx.hash}`);
-      return { success: true, txHash: tx.hash };
+      return {
+        success: true,
+        txHash: tx.hash,
+        from: senderWallet.address,
+        to: receiverWallet.address,
+        amount: transferAmount.toString(),
+      };
     } catch (error: any) {
       const txError = this.classifyError(error);
       logger.error(`Transaction failed: ${txError}`, { error: error.message });

@@ -1,18 +1,30 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Header } from './Header';
 import { InstancePanel } from './InstancePanel';
 import { FundingPanel } from './FundingPanel';
 import { StatsPanel } from './StatsPanel';
 import { WalletGrid } from './WalletGrid';
 import { connectSocket } from '../../services/socket';
+import { useAppStore } from '../../store';
+import { statsApi } from '../../services/api';
 
 export function Dashboard() {
+  const darkMode = useAppStore((state) => state.darkMode);
+  const setRecentTransactions = useAppStore((state) => state.setRecentTransactions);
+
   useEffect(() => {
     connectSocket();
-  }, []);
+
+    // Load recent transactions on startup
+    statsApi.getTransactions(5).then((transactions) => {
+      setRecentTransactions(transactions);
+    }).catch((err) => {
+      console.error('Failed to load recent transactions:', err);
+    });
+  }, [setRecentTransactions]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen ${darkMode ? 'dark bg-brutal-dark' : 'bg-gray-100'}`}>
       <Header />
 
       <main className="container mx-auto px-4 py-6">
@@ -31,9 +43,9 @@ export function Dashboard() {
         </div>
       </main>
 
-      <footer className="bg-brutal-black text-white py-4 mt-8">
+      <footer className={`py-4 mt-8 border-t-2 ${darkMode ? 'bg-brutal-dark-card border-brutal-dark-border text-brutal-gray' : 'bg-white border-brutal-black text-gray-600'}`}>
         <div className="container mx-auto px-4 text-center text-sm">
-          <span className="font-bold">TX Activity Generator</span>
+          <span className={`font-bold ${darkMode ? 'text-brutal-cyan' : 'text-brutal-black'}`}>TX Activity Generator</span>
           <span className="mx-2">|</span>
           <span>Vanar Chain (ChainID: 2040)</span>
         </div>

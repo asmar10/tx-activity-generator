@@ -24,9 +24,10 @@ export const fundingController = {
 
   async distribute(req: Request, res: Response): Promise<void> {
     try {
-      const { totalAmount, mode } = req.body as {
+      const { totalAmount, mode, twoHop = true } = req.body as {
         totalAmount: string;
         mode: DistributionMode;
+        twoHop?: boolean;
       };
 
       if (!totalAmount || !mode) {
@@ -45,7 +46,16 @@ export const fundingController = {
         return;
       }
 
-      const result = await fundingService.distributeTokens(totalAmount, mode);
+      // Use two-hop distribution by default for more organic patterns
+      let result;
+      if (twoHop) {
+        logger.info('Using two-hop distribution (Master -> Random Wallet -> Others)');
+        result = await fundingService.distributeTokensTwoHop(totalAmount, mode);
+      } else {
+        logger.info('Using direct distribution (Master -> All Wallets)');
+        result = await fundingService.distributeTokens(totalAmount, mode);
+      }
+
       res.json({ success: true, data: result });
     } catch (error: any) {
       logger.error('Failed to distribute tokens', { error: error.message });
@@ -60,8 +70,14 @@ export const fundingController = {
         return;
       }
 
-      const workerPath = path.resolve(__dirname, '../workers/auto-fund.worker.js');
-      autoFundWorker = fork(workerPath);
+      // Handle both development (.ts) and production (.js)
+      const extension = __filename.endsWith('.ts') ? '.ts' : '.js';
+      const workerPath = path.resolve(__dirname, `../workers/auto-fund.worker${extension}`);
+      const isTsNode = extension === '.ts';
+
+      autoFundWorker = fork(workerPath, [], {
+        execArgv: isTsNode ? ['-r', 'ts-node/register'] : [],
+      });
 
       autoFundWorker.on('exit', () => {
         autoFundWorker = null;

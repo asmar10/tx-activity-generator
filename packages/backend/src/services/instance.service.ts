@@ -3,6 +3,8 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
 import logger from '../utils/logger';
+import { simulatorService } from './simulator.service';
+import { emitClearTransactions } from '../socket';
 
 export interface InstanceStats {
   id: string;
@@ -21,9 +23,14 @@ class InstanceManager {
   private instances: Map<string, ChildProcess> = new Map();
   private instanceStats: Map<string, InstanceStats> = new Map();
   private onStatsUpdate?: (stats: InstanceStats[]) => void;
+  private onTransactionComplete?: (tx: any) => void;
 
   setStatsCallback(callback: (stats: InstanceStats[]) => void): void {
     this.onStatsUpdate = callback;
+  }
+
+  setTransactionCallback(callback: (tx: any) => void): void {
+    this.onTransactionComplete = callback;
   }
 
   async startInstance(): Promise<string | null> {
@@ -33,11 +40,22 @@ class InstanceManager {
     }
 
     const instanceId = uuidv4();
-    const workerPath = path.resolve(__dirname, '../workers/transaction.worker.js');
+    // Handle both development (.ts) and production (.js)
+    const extension = __filename.endsWith('.ts') ? '.ts' : '.js';
+    const workerPath = path.resolve(__dirname, `../workers/transaction.worker${extension}`);
 
     try {
+      const isSimulator = simulatorService.isEnabled();
+      const isTsNode = extension === '.ts';
+
       const child = fork(workerPath, [instanceId], {
-        env: { ...process.env, INSTANCE_ID: instanceId },
+        env: {
+          ...process.env,
+          INSTANCE_ID: instanceId,
+          SIMULATOR_MODE: isSimulator ? 'true' : 'false',
+        },
+        // Pass ts-node execution args when running TypeScript files
+        execArgv: isTsNode ? ['-r', 'ts-node/register'] : [],
       });
 
       child.on('message', (message: InstanceMessage) => {
@@ -53,6 +71,12 @@ class InstanceManager {
         logger.info(`Instance ${instanceId} exited with code ${code}`);
         this.instances.delete(instanceId);
         this.instanceStats.delete(instanceId);
+
+        // Decrement simulator instance count if in simulator mode
+        if (simulatorService.isEnabled()) {
+          simulatorService.decrementInstanceCount();
+        }
+
         this.emitStatsUpdate();
       });
 
@@ -65,7 +89,13 @@ class InstanceManager {
         status: 'running',
       });
 
-      logger.info(`Started instance ${instanceId}`);
+      logger.info(`Started instance ${instanceId}${isSimulator ? ' (SIMULATOR)' : ''}`);
+
+      // Track simulator instance count
+      if (isSimulator) {
+        simulatorService.incrementInstanceCount();
+      }
+
       this.emitStatsUpdate();
       return instanceId;
     } catch (error) {
@@ -133,6 +163,13 @@ class InstanceManager {
     return Array.from(this.instanceStats.values());
   }
 
+  async reset(): Promise<void> {
+    logger.info('Resetting: stopping all instances and clearing transaction feed');
+    await this.stopAllInstances();
+    emitClearTransactions();
+    logger.info('Reset complete');
+  }
+
   private handleWorkerMessage(instanceId: string, message: InstanceMessage): void {
     const stats = this.instanceStats.get(instanceId);
     if (!stats) return;
@@ -141,6 +178,19 @@ class InstanceManager {
       case 'tx_complete':
         stats.transactionsExecuted++;
         stats.lastTransactionAt = new Date();
+        // Emit transaction for real-time updates
+        if (this.onTransactionComplete && message.data) {
+          this.onTransactionComplete({
+            txHash: message.data.txHash,
+            from: message.data.from,
+            to: message.data.to,
+            amount: message.data.amount,
+            status: 'success',
+            instanceId,
+            isSimulator: message.data.isSimulator || false,
+            createdAt: new Date().toISOString(),
+          });
+        }
         break;
       case 'tx_error':
         logger.error(`Instance ${instanceId} transaction error`, { error: message.data });

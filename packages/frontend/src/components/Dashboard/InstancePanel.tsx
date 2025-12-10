@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, Input } from '../ui';
 import { useAppStore } from '../../store';
 import { instanceApi } from '../../services/api';
 
 export function InstancePanel() {
-  const { liveStats, instanceStats } = useAppStore();
+  const { liveStats, instanceStats, darkMode } = useAppStore();
   const [targetCount, setTargetCount] = useState('');
   const queryClient = useQueryClient();
 
@@ -16,6 +16,16 @@ export function InstancePanel() {
 
   const stopAllMutation = useMutation({
     mutationFn: instanceApi.stopAll,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['instances'] }),
+  });
+
+  const resetMutation = useMutation({
+    mutationFn: instanceApi.reset,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['instances'] }),
+  });
+
+  const stopInstanceMutation = useMutation({
+    mutationFn: (id: string) => instanceApi.stop(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['instances'] }),
   });
 
@@ -57,24 +67,32 @@ export function InstancePanel() {
           >
             STOP ALL
           </Button>
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => resetMutation.mutate()}
+            disabled={resetMutation.isPending}
+          >
+            RESET
+          </Button>
         </div>
       }
     >
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <span className="font-bold">Running:</span>
-          <span className="text-2xl font-extrabold">
+          <span className={`font-bold ${darkMode ? 'text-brutal-gray' : 'text-gray-700'}`}>Running:</span>
+          <span className={`text-2xl font-extrabold ${darkMode ? 'text-white' : 'text-brutal-black'}`}>
             {running} / {maxAllowed}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-8 border-4 border-brutal-black bg-gray-200 relative">
+        <div className={`h-8 border-2 relative ${darkMode ? 'border-brutal-dark-border bg-brutal-dark' : 'border-brutal-black bg-gray-200'}`}>
           <div
             className="h-full bg-brutal-green transition-all"
             style={{ width: `${(running / maxAllowed) * 100}%` }}
           />
-          <div className="absolute inset-0 flex items-center justify-center font-bold">
+          <div className={`absolute inset-0 flex items-center justify-center font-bold ${darkMode ? 'text-white' : 'text-brutal-black'}`}>
             {running} Active
           </div>
         </div>
@@ -104,21 +122,33 @@ export function InstancePanel() {
             {instanceStats.map((instance) => (
               <div
                 key={instance.id}
-                className="flex justify-between items-center p-2 border-2 border-brutal-black text-xs"
+                className={`flex justify-between items-center p-2 border text-xs gap-2 ${
+                  darkMode ? 'border-brutal-dark-border bg-brutal-dark' : 'border-brutal-black bg-gray-50'
+                }`}
               >
-                <span className="font-mono truncate w-24">{instance.id.slice(0, 8)}...</span>
-                <span className="font-bold">{instance.transactionsExecuted} TX</span>
+                <span className={`font-mono truncate w-20 ${darkMode ? 'text-brutal-gray' : 'text-gray-600'}`}>{instance.id.slice(0, 8)}...</span>
+                <span className={`font-bold ${darkMode ? 'text-white' : 'text-brutal-black'}`}>{instance.transactionsExecuted} TX</span>
                 <span
                   className={`px-2 py-1 font-bold ${
                     instance.status === 'running'
-                      ? 'bg-brutal-green'
+                      ? 'bg-brutal-green text-black'
                       : instance.status === 'error'
                       ? 'bg-brutal-red text-white'
-                      : 'bg-gray-300'
+                      : darkMode ? 'bg-brutal-dark-border text-brutal-gray' : 'bg-gray-300 text-gray-700'
                   }`}
                 >
                   {instance.status.toUpperCase()}
                 </span>
+                {instance.status === 'running' && (
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => stopInstanceMutation.mutate(instance.id)}
+                    disabled={stopInstanceMutation.isPending}
+                  >
+                    STOP
+                  </Button>
+                )}
               </div>
             ))}
           </div>
